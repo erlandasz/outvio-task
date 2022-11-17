@@ -7,8 +7,8 @@ import { ThrottleGuard } from './guards/throttle.guard';
 export class AppController {
     constructor(private readonly appService: AppService) {}
 
-    @UseGuards(AuthGuard)
     @Post('/')
+    @UseGuards(AuthGuard)
     guarded() {
         return {
             false: false
