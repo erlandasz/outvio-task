@@ -4,6 +4,8 @@ import * as redisStore from 'cache-manager-redis-store';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ThrottleGuard } from './guards/throttle.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
     imports: [
@@ -11,6 +13,9 @@ import { AppService } from './app.service';
         CacheModule.register({ ttl: +process.env.THROTTLE_TIMER, store: redisStore, host: process.env.REDIS_HOST, port: process.env.REDIS_PORT }),
     ],
     controllers: [AppController],
-    providers: [AppService]
+    providers: [AppService, {
+        provide: APP_GUARD,
+        useClass: ThrottleGuard
+    }]
 })
 export class AppModule {}

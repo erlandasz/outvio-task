@@ -1,7 +1,7 @@
 import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { AuthGuard } from './guards/auth.guard';
-import { ThrottleGuard } from './guards/throttle.guard';
+import { Throttle } from './decorators/throttle.decorator';
 
 @Controller()
 export class AppController {
@@ -9,22 +9,19 @@ export class AppController {
 
     @Post('/')
     @UseGuards(AuthGuard)
-    guarded() {
-        return {
-            false: false
-        };
+    first() {
+        return this.appService.first();
     }
 
     @Get('/')
-    public() {
-        return {
-            false: true
-        }
+    @Throttle(2)
+    second() {
+        return this.appService.second();
     }
 
-    @UseGuards(ThrottleGuard)
     @Get('/cache')
-    cache() {
-        return this.appService.addSomethingToCache();
+    @Throttle(15)
+    third() {
+        return this.appService.third();
     }
 }

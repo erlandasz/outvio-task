@@ -1,12 +1,16 @@
-import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-    constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+    first() {
+        return 1;
+    }
 
-    async addSomethingToCache() {
-        console.log(await this.cacheManager.store.keys());
-        return true;
+    second() {
+        return 2;
+    }
+
+    third() {
+        return 3;
     }
 }

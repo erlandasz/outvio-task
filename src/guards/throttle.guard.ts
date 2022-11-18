@@ -8,60 +8,46 @@ import {
     HttpException
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { Observable } from 'rxjs';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class ThrottleGuard implements CanActivate {
-    constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+    private cost = 1;
 
-    canActivate(
-        context: ExecutionContext
-    ): boolean | Promise<boolean> | Observable<boolean> {
+    constructor(
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
+        private reflector: Reflector
+    ) {}
+
+    canActivate(context: ExecutionContext): boolean | Promise<boolean> {
         const req = context.switchToHttp().getRequest();
+
         const ip =
             req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        const isAuth = req.headers['token'] == process.env.SOME_KEY;
+        const isAuth = req.headers['token'] === process.env.SOME_KEY;
+
+        this.cost = this.reflector.get('cost', context.getHandler()) || 1;
 
         if (isAuth) {
-            return this.validateAuthenticatedRequest(req.headers['token']);
+            return this.validate(req.headers['token'], +process.env.AUTHENTICATED_THROTTLE_LIMIT);
         }
 
-        return this.validatePublicRequest(ip);
+        return this.validate(ip, +process.env.PUBLIC_THROTTLE_LIMIT);
     }
 
-    async validatePublicRequest(ip: string) {
-        const key = `throttle:${ip}`;
 
-        return this.checkPoints(key, +process.env.PUBLIC_THROTTLE_LIMIT);
-    }
+    async validate(key: string, limit: number) {
+        const remainder = (await this.cacheManager.get(key)) || limit;
 
-    async validateAuthenticatedRequest(token: string) {
-        const key = `throttle:${token}`;
-
-        return this.checkPoints(key, +process.env.AUTHENTICATED_THROTTLE_LIMIT);
-    }
-
-    async checkPoints(key: string, limit: number) {
-        const curr = JSON.parse(await this.cacheManager.get(key)) || {
-            remaining: limit,
-        };
-
-        if (curr.remaining <= 0) {
+        if (remainder < this.cost) {
             throw new HttpException(
                 { HttpStatus: HttpStatus.TOO_MANY_REQUESTS },
                 HttpStatus.TOO_MANY_REQUESTS
             );
         }
 
-        console.log(curr)
-        const cache = {
-            ...curr,
-            lastRequest: new Date().getTime(),
-            remaining: curr.remaining - 1
-        }
-
-        await this.cacheManager.set(key, JSON.stringify(cache));
+        await this.cacheManager.set(`throttle:${key}`, +remainder - this.cost);
 
         return true;
     }
