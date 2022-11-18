@@ -1,27 +1,24 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, Delete, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from './guards/auth.guard';
 import { Throttle } from './decorators/throttle.decorator';
 
 @Controller()
 export class AppController {
-    constructor(private readonly appService: AppService) {}
-
     @Post('/')
     @UseGuards(AuthGuard)
     first() {
-        return this.appService.first();
+        return 1
     }
 
     @Get('/')
     @Throttle(2)
     second() {
-        return this.appService.second();
+        return 2
     }
 
-    @Get('/cache')
-    @Throttle(15)
+    @Delete('/')
+    @Throttle(5)
     third() {
-        return this.appService.third();
+        return 3
     }
 }
