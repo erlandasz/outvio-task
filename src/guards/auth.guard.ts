@@ -8,7 +8,7 @@ export class AuthGuard implements CanActivate {
     ): boolean | Promise<boolean> | Observable<boolean> {
         const req = context.switchToHttp().getRequest();
 
-        if (process.env.SOME_KEY == req.headers['token']) {
+        if (process.env.AUTH_KEY == req.headers['token']) {
             return true;
         }
         return false;

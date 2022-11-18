@@ -25,7 +25,7 @@ export class ThrottleGuard implements CanActivate {
         const ip =
             req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        const isAuth = req.headers['token'] === process.env.SOME_KEY;
+        const isAuth = req.headers['token'] === process.env.AUTH_KEY;
 
         this.cost = this.reflector.get('cost', context.getHandler()) || 1;
 
